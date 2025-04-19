@@ -1,6 +1,6 @@
-import * as React from "react";
+import * as React from 'react';
 
-import { IconSvgProps } from "@/types";
+import { IconSvgProps } from '@/types';
 
 export const GithubIcon: React.FC<IconSvgProps> = ({
   height,
