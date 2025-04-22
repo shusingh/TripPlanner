@@ -1,11 +1,16 @@
 import { Route, Routes } from 'react-router-dom';
 
-import IndexPage from '@/pages/index';
+import PlannerPage from './pages/Planner/Planner';
+import ResultsPage from './pages/Results/Results';
+
+import LandingPage from '@/pages/LandingPage/LandingPage';
 
 function App() {
   return (
     <Routes>
-      <Route element={<IndexPage />} path="/" />
+      <Route element={<LandingPage />} path="/" />
+      <Route element={<PlannerPage />} path="/planner" />
+      <Route element={<ResultsPage />} path="/planner/results" />
     </Routes>
   );
 }
