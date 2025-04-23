@@ -14,9 +14,8 @@ func corsMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     // Allow your frontend’s origin (or use "*" to allow all)
     w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-    w.Header().Set("Vary", "Origin")
+    w.Header().Set("Access-Control-Allow-Methods", "POST, GET, HEAD, PUT, DELETE, OPTIONS")
+    w.Header().Set("Access-Control-Allow-Headers", "Origin, X-requested-With, Content-Type, Accept, Authorization")
 
     // Preflight request
     if r.Method == http.MethodOptions {
