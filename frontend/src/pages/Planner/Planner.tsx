@@ -5,13 +5,13 @@ import { useState, useEffect } from 'react';
 import { Progress, Button } from '@heroui/react';
 import { Icon } from '@iconify/react';
 import { parseDate } from '@internationalized/date';
+import { useNavigate } from 'react-router-dom';
 
 import StepDestination from './components/StepDestination';
 import StepDates from './components/StepDates';
 import StepInterests from './components/StepInterests';
 
 import DefaultLayout from '@/layouts/default';
-import { useNavigate } from 'react-router-dom';
 
 // Key for localStorage
 const STORAGE_KEY = 'planner-state';
@@ -26,11 +26,13 @@ type StoredState = {
 };
 
 export default function PlannerPage() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
   const [destination, setDestination] = useState('');
-  const [dateRange, setDateRange] = useState<RangeValue<DateValue> | null>(null);
+  const [dateRange, setDateRange] = useState<RangeValue<DateValue> | null>(
+    null
+  );
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,10 @@ export default function PlannerPage() {
         setDestination(obj.destination || '');
         setTags(obj.tags || []);
         if (obj.start && obj.end) {
-          setDateRange({ start: parseDate(obj.start), end: parseDate(obj.end) });
+          setDateRange({
+            start: parseDate(obj.start),
+            end: parseDate(obj.end),
+          });
         }
       } catch {
         // ignore
@@ -70,8 +75,8 @@ export default function PlannerPage() {
     step === 1
       ? destination.trim().length > 0
       : step === 2
-      ? !!(dateRange && dateRange.start && dateRange.end)
-      : tags.length > 0;
+        ? !!(dateRange && dateRange.start && dateRange.end)
+        : tags.length > 0;
 
   const handleNext = () => {
     if (isStepValid) setStep((s) => Math.min(s + 1, TOTAL_STEPS));
@@ -83,7 +88,8 @@ export default function PlannerPage() {
     );
 
   const handleSubmit = async () => {
-    if (!isStepValid || !dateRange || !dateRange.start || !dateRange.end) return;
+    if (!isStepValid || !dateRange || !dateRange.start || !dateRange.end)
+      return;
     setLoading(true);
     setError(null);
     try {
@@ -93,7 +99,8 @@ export default function PlannerPage() {
         endDate: dateRange.end.toString(),
         tags,
       });
-      const resp = await fetch('/api/recommendations', {
+      const base = import.meta.env.VITE_API_BASE_URL || '';
+      const resp = await fetch(`${base}/api/recommendations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: payload,
@@ -101,7 +108,7 @@ export default function PlannerPage() {
 
       if (!resp.ok) throw new Error(`Status ${resp.status}`);
       const data = await resp.json();
-      
+
       // send the data to ResultsPage
       navigate('/planner/results', { state: data });
     } catch {
@@ -113,12 +120,12 @@ export default function PlannerPage() {
 
   return (
     <DefaultLayout>
-      <div className="max-w-xl mx-auto p-4">
+      <div className="mx-auto max-w-xl p-4">
         {/* Progress + label */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <Progress
             aria-label="Progress"
-            className="flex-1 mr-4"
+            className="mr-4 flex-1"
             value={(step / TOTAL_STEPS) * 100}
           />
           <span className="text-sm font-medium">
@@ -134,16 +141,10 @@ export default function PlannerPage() {
           />
         )}
         {step === 2 && (
-          <StepDates
-            dateRange={dateRange}
-            onChange={setDateRange}
-          />
+          <StepDates dateRange={dateRange} onChange={setDateRange} />
         )}
         {step === 3 && (
-          <StepInterests
-            selectedTags={tags}
-            onToggleTag={toggleTag}
-          />
+          <StepInterests selectedTags={tags} onToggleTag={toggleTag} />
         )}
 
         {/* Navigation buttons */}
@@ -157,12 +158,18 @@ export default function PlannerPage() {
             >
               Back
             </Button>
-          ) : <span />}
+          ) : (
+            <span />
+          )}
 
           <Button
             color="primary"
             endContent={
-              <Icon icon={step < TOTAL_STEPS ? 'lucide:arrow-right' : 'lucide:check'} />
+              <Icon
+                icon={
+                  step < TOTAL_STEPS ? 'lucide:arrow-right' : 'lucide:check'
+                }
+              />
             }
             isDisabled={!isStepValid}
             isLoading={isLoading}

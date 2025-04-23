@@ -8,14 +8,14 @@ export interface StepInterestsProps {
 
 const TAGS = [
   { label: 'Must‑see Attractions', icon: 'lucide:map' },
-  { label: 'Great Food',           icon: 'lucide:utensils' },
-  { label: 'Hidden Gems',          icon: 'lucide:star' },
-  { label: 'Nightlife',            icon: 'lucide:moon' },
-  { label: 'History',              icon: 'lucide:book' },
-  { label: 'Nature',               icon: 'lucide:tree' },
-  { label: 'Adventure',            icon: 'lucide:mountain' },
-  { label: 'Culture',              icon: 'lucide:landmark' },
-  { label: 'Shopping',             icon: 'lucide:shopping-bag' },
+  { label: 'Great Food', icon: 'lucide:utensils' },
+  { label: 'Hidden Gems', icon: 'lucide:star' },
+  { label: 'Nightlife', icon: 'lucide:moon' },
+  { label: 'History', icon: 'lucide:book' },
+  { label: 'Nature', icon: 'lucide:tree' },
+  { label: 'Adventure', icon: 'lucide:mountain' },
+  { label: 'Culture', icon: 'lucide:landmark' },
+  { label: 'Shopping', icon: 'lucide:shopping-bag' },
 ];
 
 export default function StepInterests({

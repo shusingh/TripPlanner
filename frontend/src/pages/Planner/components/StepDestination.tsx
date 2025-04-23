@@ -17,7 +17,9 @@ export default function StepDestination({
         label="Destination"
         placeholder="e.g., Paris, France"
         size="lg"
-        startContent={<Icon className="text-default-400" icon="lucide:map-pin" />}
+        startContent={
+          <Icon className="text-default-400" icon="lucide:map-pin" />
+        }
         value={destination}
         onValueChange={onChange}
       />
