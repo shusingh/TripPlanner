@@ -16,6 +16,7 @@ func corsMiddleware(next http.Handler) http.Handler {
     w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
     w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+    w.Header().Set("Vary", "Origin")
 
     // Preflight request
     if r.Method == http.MethodOptions {
