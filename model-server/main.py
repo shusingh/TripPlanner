@@ -4,7 +4,7 @@ from transformers import pipeline
 
 generator = pipeline(
     "text2text-generation",
-    model="google/flan-t5-small",
+    model="google/flan-t5-small",  # or your chosen small model
     device=-1  # CPU
 )
 
@@ -18,11 +18,11 @@ class InferenceResponse(BaseModel):
 
 @app.post("/generate", response_model=InferenceResponse)
 def generate(req: InferenceRequest):
-    # 2. Run inference
+    # 1. Run inference without return_full_text
     result = generator(
         req.inputs,
         max_new_tokens=2000,
-        temperature=0.7,
-        return_full_text=False
+        do_sample=True,
+        temperature=0.7
     )
-    return InferenceResponse(generated_text=result[0]['generated_text'])
+    return InferenceResponse(generated_text=result[0]["generated_text"])
