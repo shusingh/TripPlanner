@@ -13,7 +13,7 @@ import (
 func corsMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     // Allow your frontend’s origin (or use "*" to allow all)
-    w.Header().Set("Access-Control-Allow-Origin", "https://tripplannerwebsite.onrender.com")
+    w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
     w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
