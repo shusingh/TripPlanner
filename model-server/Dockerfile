@@ -1,8 +1,9 @@
 # model-server/Dockerfile
 
+# 1. Start from a slim Python base
 FROM python:3.11-slim
 
-# 1) Install OS packages needed by PyTorch (BLAS, OpenMP, compiler)
+# 2. Install OS deps for PyTorch (OpenBLAS, OpenMP, compiler)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       build-essential \
@@ -12,16 +13,16 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# 2) Copy just requirements, install torch first (so it is cached separately)
+# 3. Copy & install Python dependencies
 COPY requirements.txt .
 
-# Install PyTorch CPU wheel (no CUDA)
+# Install CPU-only PyTorch first, then your other requirements
 RUN pip install --no-cache-dir \
       torch --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt
 
-# 3) Copy application code
+# 4. Copy application code
 COPY main.py .
 
-# 4) Start the Uvicorn server
+# 5. Run the FastAPI app
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
