@@ -14,7 +14,7 @@ import (
 var ErrQuotaExceeded = errors.New("hf quota exceeded")
 
 const (
-	Endpoint = "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1"
+	Endpoint = "https://tripplannermodelserver.onrender.com/generate"
 )
 
 // QueryHF sends a prompt to the Hugging Face API and returns the generated response.
