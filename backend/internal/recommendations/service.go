@@ -15,15 +15,24 @@ import (
 func GetRecommendations(req models.RecommendationRequest) (models.RecommendationResponse, error) {
 	// Construct the prompt for the AI model
 	prompt := fmt.Sprintf(
-		`You are a travel assistant.
-Produce a JSON object with fields "attractions", "food", "other".
-Each field is an array of objects with keys: name, description, latitude, longitude, url.
-User wants suggestions for %s from %s to %s with tags %s.`,
+		`You are a JSON generator. 
+	  
+		**Respond with exactly one JSON object and nothing else.** 
+		The JSON must have these three keys: 
+		  "attractions": an array of objects {name, description, latitude, longitude, url}, 
+		  "food": same shape, 
+		  "other": same shape.
+	  
+		Now generate that object for:
+		Destination: %s
+		Dates: from %s to %s
+		Tags: %s
+		`,
 		req.Destination,
 		req.StartDate,
 		req.EndDate,
 		strings.Join(req.Tags, ", "),
-	)
+	  )	  
 
 	// Query the Hugging Face API
 	generated, err := hf.QueryHF(prompt)
