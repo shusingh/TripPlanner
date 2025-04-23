@@ -1,8 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
-# 1. Load model and tokenizer once at startup
+# 1. Load model & tokenizer
 tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-small")
 model     = T5ForConditionalGeneration.from_pretrained("google/flan-t5-small")
 
@@ -15,20 +15,24 @@ class InferenceResponse(BaseModel):
     generated_text: str
 
 @app.post("/generate", response_model=InferenceResponse)
-def generate(req: InferenceRequest):
-    # 2. Tokenize the prompt
+async def generate(req: InferenceRequest, request: Request):
+    # DEBUG: log incoming prompt
+    print(f"[generate] inputs={req.inputs!r}")
+
+    # Tokenize
     inputs = tokenizer(req.inputs, return_tensors="pt")
 
-    # 3. Generate output (on CPU)
+    # Generate using max_new_tokens
     outputs = model.generate(
         inputs.input_ids,
-        max_length=512,      # total tokens (prompt + generated)
-        do_sample=True,      # enable sampling
-        temperature=0.7,     # sampling temperature
-        top_p=0.9,           # nucleus sampling
-        num_return_sequences=1,
+        max_new_tokens=64,   # only generate up to 64 new tokens
+        do_sample=False      # deterministic; should at least echo
     )
 
-    # 4. Decode and return
+    # Decode
     text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+    # DEBUG: log raw output
+    print(f"[generate] output={text!r}")
+
     return InferenceResponse(generated_text=text)
