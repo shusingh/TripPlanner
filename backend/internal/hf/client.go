@@ -1,95 +1,92 @@
 package hf
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"regexp"
+  "bytes"
+  "encoding/json"
+  "errors"
+  "fmt"
+  "io"
+  "log"
+  "net/http"
 )
 
 var ErrQuotaExceeded = errors.New("hf quota exceeded")
 
 const (
-	Endpoint = "https://tripplannermodelserver.onrender.com/generate"
+  // self‐hosted model endpoint
+  Endpoint = "https://tripplannermodelserver.onrender.com/generate"
 )
 
-// QueryHF sends a prompt to the Hugging Face API and returns the generated response.
-// It handles authentication, request formatting, and response parsing to extract
-// the JSON content from the model's output.
+type inferenceRequest struct {
+  Inputs     string                 `json:"inputs"`
+  Parameters map[string]interface{} `json:"parameters"`
+}
+
+type inferenceResponse struct {
+  GeneratedText string `json:"generated_text"`
+}
+
+// QueryHF sends the prompt to your model-server and returns the raw generated text.
+// It logs key steps for debugging, without any sensitive info.
 func QueryHF(prompt string) (string, error) {
-	payload := map[string]interface{}{
-		"inputs": prompt,
-		"parameters": map[string]interface{}{
-			"max_new_tokens":    2000,
-			"temperature":       0.7,
-			"return_full_text": false,
-		},
-	}
-	bodyBytes, err := json.Marshal(payload)
-	if err != nil {
-		return "", fmt.Errorf("marshal payload: %w", err)
-	}
+  log.Printf("HF.QueryHF ▶ prompt: %q", prompt)
 
-	req, err := http.NewRequest("POST", Endpoint, bytes.NewBuffer(bodyBytes))
-	if err != nil {
-		return "", fmt.Errorf("create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
+  // Build request body
+  reqBody := inferenceRequest{
+    Inputs: prompt,
+    Parameters: map[string]interface{}{
+      "max_new_tokens":    2000,
+      "temperature":       0.7,
+      "return_full_text": false,
+    },
+  }
+  bodyBytes, err := json.Marshal(reqBody)
+  if err != nil {
+    log.Printf("HF.QueryHF ✖ marshal payload: %v", err)
+    return "", fmt.Errorf("marshal payload: %w", err)
+  }
 
-	token := os.Getenv("HF_TOKEN")
-	if token == "" {
-		return "", fmt.Errorf("HF_TOKEN environment variable is not set")
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
+  // Create HTTP request
+  req, err := http.NewRequest("POST", Endpoint, bytes.NewBuffer(bodyBytes))
+  if err != nil {
+    log.Printf("HF.QueryHF ✖ create request: %v", err)
+    return "", fmt.Errorf("create request: %w", err)
+  }
+  req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("request error: %w", err)
-	}
-	defer resp.Body.Close()
+  // Send it
+  log.Printf("HF.QueryHF ▶ sending to %s", Endpoint)
+  resp, err := http.DefaultClient.Do(req)
+  if err != nil {
+    log.Printf("HF.QueryHF ✖ request error: %v", err)
+    return "", fmt.Errorf("request error: %w", err)
+  }
+  defer resp.Body.Close()
 
-	respBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("read response: %w", err)
-	}
+  // Read response
+  respBytes, err := io.ReadAll(resp.Body)
+  if err != nil {
+    log.Printf("HF.QueryHF ✖ read response: %v", err)
+    return "", fmt.Errorf("read response: %w", err)
+  }
+  log.Printf("HF.QueryHF ◀ status: %d, body-length: %d", resp.StatusCode, len(respBytes))
 
-	if resp.StatusCode == 402 {
-		// free-tier quota exhausted
-		return "", ErrQuotaExceeded
-	  }
+  if resp.StatusCode == http.StatusPaymentRequired {
+    log.Printf("HF.QueryHF ✖ quota exceeded")
+    return "", ErrQuotaExceeded
+  }
+  if resp.StatusCode != http.StatusOK {
+    log.Printf("HF.QueryHF ✖ non-200 status: %s", string(respBytes))
+    return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, respBytes)
+  }
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(respBytes))
-	}
+  // Parse JSON
+  var ir inferenceResponse
+  if err := json.Unmarshal(respBytes, &ir); err != nil {
+    log.Printf("HF.QueryHF ✖ unmarshal JSON: %v", err)
+    return "", fmt.Errorf("unmarshal response: %w", err)
+  }
+  log.Printf("HF.QueryHF ✅ got %d chars", len(ir.GeneratedText))
 
-	var result []map[string]interface{}
-	if err := json.Unmarshal(respBytes, &result); err != nil {
-		return "", fmt.Errorf("parse response: %w", err)
-	}
-
-	if len(result) == 0 {
-		return "", fmt.Errorf("empty response from API")
-	}
-
-	generatedText, ok := result[0]["generated_text"].(string)
-	if !ok {
-		return "", fmt.Errorf("invalid response format")
-	}
-
-	re := regexp.MustCompile(`(?s)\{.*\}`)
-	match := re.FindString(generatedText)
-	if match == "" {
-		return "", fmt.Errorf("no JSON found in response")
-	}
-
-	var jsonObj map[string]interface{}
-	if err := json.Unmarshal([]byte(match), &jsonObj); err != nil {
-		return "", fmt.Errorf("invalid JSON in response: %w", err)
-	}
-
-	return match, nil
+  return ir.GeneratedText, nil
 }
