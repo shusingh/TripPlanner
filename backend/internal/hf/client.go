@@ -6,87 +6,87 @@ import (
   "errors"
   "fmt"
   "io"
-  "log"
   "net/http"
+  "os"
 )
 
 var ErrQuotaExceeded = errors.New("hf quota exceeded")
 
 const (
-  // self‐hosted model endpoint
-  Endpoint = "https://tripplannermodelserver.onrender.com/generate"
+  // Switch this to any HF-hosted model you prefer:
+  Endpoint = "https://api-inference.huggingface.co/models/google/flan-t5-base"
 )
 
+// inferenceRequest is what HF expects in the POST body.
 type inferenceRequest struct {
   Inputs     string                 `json:"inputs"`
-  Parameters map[string]interface{} `json:"parameters"`
+  Parameters map[string]interface{} `json:"parameters,omitempty"`
 }
 
-type inferenceResponse struct {
+// inferenceResponse is how HF returns the generated text.
+type inferenceResponse []struct {
   GeneratedText string `json:"generated_text"`
 }
 
-// QueryHF sends the prompt to your model-server and returns the raw generated text.
-// It logs key steps for debugging, without any sensitive info.
+// QueryHF sends the prompt to Hugging Face, returning the raw generated_text.
+// If you hit your free-tier quota (HTTP 402), it returns ErrQuotaExceeded.
 func QueryHF(prompt string) (string, error) {
-  log.Printf("HF.QueryHF ▶ prompt: %q", prompt)
-
-  // Build request body
+  // Build the request payload
   reqBody := inferenceRequest{
     Inputs: prompt,
     Parameters: map[string]interface{}{
-      "max_new_tokens":    2000,
-      "temperature":       0.7,
-      "return_full_text": false,
+      "max_new_tokens": 2000,
+      "temperature":    0.7,
     },
   }
   bodyBytes, err := json.Marshal(reqBody)
   if err != nil {
-    log.Printf("HF.QueryHF ✖ marshal payload: %v", err)
     return "", fmt.Errorf("marshal payload: %w", err)
   }
 
   // Create HTTP request
-  req, err := http.NewRequest("POST", Endpoint, bytes.NewBuffer(bodyBytes))
+  req, err := http.NewRequest("POST", Endpoint, bytes.NewReader(bodyBytes))
   if err != nil {
-    log.Printf("HF.QueryHF ✖ create request: %v", err)
     return "", fmt.Errorf("create request: %w", err)
   }
   req.Header.Set("Content-Type", "application/json")
 
-  // Send it
-  log.Printf("HF.QueryHF ▶ sending to %s", Endpoint)
+  // Attach your HF token from the env
+  token := os.Getenv("HF_TOKEN")
+  if token == "" {
+    return "", fmt.Errorf("HF_TOKEN environment variable is not set")
+  }
+  req.Header.Set("Authorization", "Bearer "+token)
+
+  // Send to HF
   resp, err := http.DefaultClient.Do(req)
   if err != nil {
-    log.Printf("HF.QueryHF ✖ request error: %v", err)
     return "", fmt.Errorf("request error: %w", err)
   }
   defer resp.Body.Close()
 
-  // Read response
+  // Read the full response body
   respBytes, err := io.ReadAll(resp.Body)
   if err != nil {
-    log.Printf("HF.QueryHF ✖ read response: %v", err)
     return "", fmt.Errorf("read response: %w", err)
   }
-  log.Printf("HF.QueryHF ◀ status: %d, body-length: %d", resp.StatusCode, len(respBytes))
 
+  // Handle out-of-quota
   if resp.StatusCode == http.StatusPaymentRequired {
-    log.Printf("HF.QueryHF ✖ quota exceeded")
     return "", ErrQuotaExceeded
   }
   if resp.StatusCode != http.StatusOK {
-    log.Printf("HF.QueryHF ✖ non-200 status: %s", string(respBytes))
-    return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, respBytes)
+    return "", fmt.Errorf("HF API failed %d: %s", resp.StatusCode, respBytes)
   }
 
-  // Parse JSON
+  // Parse into our struct
   var ir inferenceResponse
   if err := json.Unmarshal(respBytes, &ir); err != nil {
-    log.Printf("HF.QueryHF ✖ unmarshal JSON: %v", err)
     return "", fmt.Errorf("unmarshal response: %w", err)
   }
-  log.Printf("HF.QueryHF ✅ got %d chars", len(ir.GeneratedText))
+  if len(ir) == 0 {
+    return "", fmt.Errorf("empty response from HF")
+  }
 
-  return ir.GeneratedText, nil
+  return ir[0].GeneratedText, nil
 }
