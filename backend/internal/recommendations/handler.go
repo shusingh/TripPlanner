@@ -2,9 +2,11 @@ package recommendations
 
 import (
   "encoding/json"
+  "errors"
   "log"
   "net/http"
 
+  "github.com/shusingh/TripPlanner/backend/internal/hf"
   "github.com/shusingh/TripPlanner/backend/internal/models"
 )
 
@@ -24,11 +26,18 @@ func Handler(w http.ResponseWriter, r *http.Request) {
   }
   log.Printf("ℹ️  Handler: got request %+v", req)
 
-  // Call your service
   resp, err := GetRecommendations(req)
   if err != nil {
     log.Printf("❌ Handler: GetRecommendations error: %v", err)
-    http.Error(w, "internal server error", http.StatusInternalServerError)
+    // If the root cause was HF quota exhaustion, return 503 & a clear message:
+    if errors.Is(err, hf.ErrQuotaExceeded) {
+      http.Error(w,
+        "Hugging Face quota exceeded; please try again later or upgrade your plan",
+        http.StatusServiceUnavailable,
+      )
+    } else {
+      http.Error(w, "internal server error", http.StatusInternalServerError)
+    }
     return
   }
   log.Printf("✅ Handler: sending response with %d attractions, %d food, %d other",

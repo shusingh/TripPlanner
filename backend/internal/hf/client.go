@@ -3,12 +3,15 @@ package hf
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"regexp"
 )
+
+var ErrQuotaExceeded = errors.New("hf quota exceeded")
 
 const (
 	Endpoint = "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1"
@@ -53,6 +56,11 @@ func QueryHF(prompt string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("read response: %w", err)
 	}
+
+	if resp.StatusCode == 402 {
+		// free-tier quota exhausted
+		return "", ErrQuotaExceeded
+	  }
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(respBytes))
