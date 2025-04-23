@@ -40,16 +40,15 @@ async def generate(payload: InferenceRequest):
     max_new = 64
     prompt_len = inputs["input_ids"].shape[-1]
     outputs = model.generate(
-        inputs["input_ids"],
-        max_length=prompt_len + max_new,
-        do_sample=True,
-        temperature=0.7,
-        top_p=0.9,
-        eos_token_id=tokenizer.eos_token_id,
-        pad_token_id=tokenizer.pad_token_id,
-        num_return_sequences=1,
-        early_stopping=True,
-    )
+    inputs["input_ids"],
+    max_length=prompt_len + max_new,
+    num_beams=4,  # Use beam search instead of sampling
+    # do_sample=False, # Implied by num_beams > 1
+    early_stopping=True,
+    # You might remove temperature/top_p when using beam search
+    eos_token_id=tokenizer.eos_token_id,
+    pad_token_id=tokenizer.pad_token_id,
+)
 
     # 4) Decode, skipping all special tokens
     text = tokenizer.decode(outputs[0], skip_special_tokens=True)

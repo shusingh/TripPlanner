@@ -1,0 +1,24 @@
+HTTP/1.1 400 Bad Request
+Date: Wed, 23 Apr 2025 16:34:01 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 443
+Connection: keep-alive
+vary: Origin
+x-request-id: req_bf597d8045aae077062d812fa2f7c82f
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+cf-cache-status: DYNAMIC
+Set-Cookie: __cf_bm=e29s9u630ol91yZNBwdkkhjzBna131HE3xJF8QYKCYs-1745426041-1.0.1.1-TaMgJxfzNbvyyVfKQ1165aLh.QZIcoL6sGKTLcTH6j7blfggkB5bxg4VWS4MCiRLbIcDDPvjBB3.OGS308WKdFF1fnmStZVaaKNAF8ztsHk; path=/; expires=Wed, 23-Apr-25 17:04:01 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+X-Content-Type-Options: nosniff
+Set-Cookie: _cfuvid=GwC3QR0rB03vnJsP820iopgqs1fW9.BPcluvifjWUPU-1745426041756-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+Server: cloudflare
+CF-RAY: 934ec4135fdbb9c4-SEA
+alt-svc: h3=":443"; ma=86400
+
+{
+    "error": {
+        "message": "We could not parse the JSON body of your request. (HINT: This likely means you aren't using your HTTP library correctly. The OpenAI API expects a JSON payload, but what was sent was not valid JSON. If you have trouble figuring out how to fix this, please contact us through our help center at help.openai.com.)",
+        "type": "invalid_request_error",
+        "param": null,
+        "code": null
+    }
+}
