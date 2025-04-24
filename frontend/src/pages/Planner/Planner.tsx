@@ -40,42 +40,62 @@ export default function PlannerPage() {
       cur.includes(label) ? cur.filter((t) => t !== label) : [...cur, label]
     );
 
-  const handleSubmit = async () => {
-    if (!isStepValid || !dateRange?.start || !dateRange.end) return;
-    setLoading(true);
-    setError(null);
+    const handleSubmit = async () => {
+      if (!isStepValid || !dateRange?.start || !dateRange.end) return;
+      setLoading(true);
+      setError(null);
+    
+      try {
+        const payload = {
+          destination,
+          startDate: dateRange.start.toString(),
+          endDate: dateRange.end.toString(),
+          tags,
+        };
+    
+        const base = import.meta.env.VITE_API_BASE_URL || '';
+        const resp = await fetch(`${base}/api/recommendations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+    
+        if (!resp.ok) {
+          // try to parse JSON body
+          let msg = `Status ${resp.status}`;
 
-    try {
-      const payload = {
-        destination,
-        startDate: dateRange.start.toString(),
-        endDate: dateRange.end.toString(),
-        tags,
-      };
+          try {
+            const data = await resp.json();
 
-      const base = import.meta.env.VITE_API_BASE_URL || '';
-      const resp = await fetch(`${base}/api/recommendations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+            // common patterns
+            if (typeof data.error === 'string') {
+              msg = data.error;
+            } else if (data.detail) {
+              msg = Array.isArray(data.detail)
+                ? data.detail.map((d: any) => d.msg || JSON.stringify(d)).join('; ')
+                : JSON.stringify(data.detail);
+            } else {
+              msg = JSON.stringify(data);
+            }
+          } catch {
+            // not JSON? try plain text
+            const txt = await resp.text();
 
-      if (!resp.ok) {
-        const body = await resp.json().catch(() => null);
-        const msg = body?.error || `Status ${resp.status}`;
+            if (txt) msg = txt;
+          }
+          throw new Error(msg);
+        }
+    
+        const data = await resp.json();
 
-        throw new Error(msg);
+        navigate('/planner/results', { state: data });
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch recommendations. Please try again.');
+      } finally {
+        setLoading(false);
       }
-
-      const data = await resp.json();
-
-      navigate('/planner/results', { state: data });
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch recommendations. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    
 
   return (
     <DefaultLayout>

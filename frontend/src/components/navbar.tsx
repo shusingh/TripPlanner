@@ -1,20 +1,21 @@
-import { Link } from '@heroui/link';
+// components/navbar.tsx
+import React, { useState } from 'react'
+import { Link } from '@heroui/link'
 import {
   Navbar as HeroUINavbar,
   NavbarContent,
   NavbarItem,
   NavbarMenuToggle,
-} from '@heroui/navbar';
+  NavbarMenu,
+  NavbarMenuItem,
+} from '@heroui/navbar'
 
-import { siteConfig } from '@/config/site';
-import { ThemeSwitch } from '@/components/theme-switch';
-import { GithubIcon, LinkedInIcon, DeveloperIcon } from '@/components/icons';
+import { siteConfig } from '@/config/site'
+import { ThemeSwitch } from '@/components/theme-switch'
+import { GithubIcon, LinkedInIcon, DeveloperIcon } from '@/components/icons'
 
-interface NavActionsProps {
-  className?: string;
-}
-
-const NavActions: React.FC<NavActionsProps> = ({ className }) => (
+//–– your social / theme icons block
+const NavActions: React.FC<{ className?: string }> = ({ className }) => (
   <div className={`flex items-center gap-4 ${className}`}>
     <Link
       isExternal
@@ -39,28 +40,44 @@ const NavActions: React.FC<NavActionsProps> = ({ className }) => (
     </Link>
     <ThemeSwitch />
   </div>
-);
+)
 
 export const Navbar: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky">
-      <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
+    <HeroUINavbar
+      isMenuOpen={isMenuOpen}
+      maxWidth="xl"
+      position="sticky"
+      onMenuOpenChange={setIsMenuOpen}
+    >
+      {/* mobile: toggle + title */}
+      <NavbarContent className="pl-4 sm:hidden" justify="start">
+        <NavbarMenuToggle
+          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+        />
+        <h1 className="ml-4 text-xl font-semibold">AI Trip Planner</h1>
+      </NavbarContent>
+
+      {/* desktop: title left */}
+      <NavbarContent className="hidden sm:flex" justify="start">
         <h1 className="text-xl font-semibold">AI Trip Planner</h1>
       </NavbarContent>
 
-      <NavbarContent
-        className="hidden basis-1/5 sm:flex sm:basis-full"
-        justify="end"
-      >
-        <NavbarItem className="hidden gap-2 sm:flex">
+      {/* desktop: actions right */}
+      <NavbarContent className="hidden sm:flex" justify="end">
+        <NavbarItem>
           <NavActions />
         </NavbarItem>
       </NavbarContent>
 
-      <NavbarContent className="basis-1 pl-4 sm:hidden" justify="end">
-        <NavActions className="flex gap-2" />
-        <NavbarMenuToggle aria-label="Toggle navigation menu" />
-      </NavbarContent>
+      {/* mobile: slide-down menu */}
+      <NavbarMenu className="sm:hidden">
+        <NavbarMenuItem>
+          <NavActions className="flex flex-col gap-4 p-4" />
+        </NavbarMenuItem>
+      </NavbarMenu>
     </HeroUINavbar>
-  );
-};
+  )
+}
