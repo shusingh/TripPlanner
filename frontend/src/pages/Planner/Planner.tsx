@@ -1,10 +1,9 @@
 import type { DateValue } from '@react-types/datepicker';
 import type { RangeValue } from '@react-types/shared';
 
-import { useState, useEffect } from 'react';
-import { Progress, Button } from '@heroui/react';
+import { useState } from 'react';
+import { Progress, Button, Alert } from '@heroui/react';
 import { Icon } from '@iconify/react';
-import { parseDate } from '@internationalized/date';
 import { useNavigate } from 'react-router-dom';
 
 import StepDestination from './components/StepDestination';
@@ -13,70 +12,24 @@ import StepInterests from './components/StepInterests';
 
 import DefaultLayout from '@/layouts/default';
 
-// Key for localStorage
-const STORAGE_KEY = 'planner-state';
 const TOTAL_STEPS = 3;
-
-type StoredState = {
-  step: number;
-  destination: string;
-  tags: string[];
-  start?: string;
-  end?: string;
-};
 
 export default function PlannerPage() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
   const [destination, setDestination] = useState('');
-  const [dateRange, setDateRange] = useState<RangeValue<DateValue> | null>(
-    null
-  );
+  const [dateRange, setDateRange] = useState<RangeValue<DateValue> | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Load saved state on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-
-    if (saved) {
-      try {
-        const obj: StoredState = JSON.parse(saved);
-
-        setStep(obj.step || 1);
-        setDestination(obj.destination || '');
-        setTags(obj.tags || []);
-        if (obj.start && obj.end) {
-          setDateRange({
-            start: parseDate(obj.start),
-            end: parseDate(obj.end),
-          });
-        }
-      } catch {
-        // ignore
-      }
-    }
-  }, []);
-
-  // Persist state on changes
-  useEffect(() => {
-    const store: StoredState = { step, destination, tags };
-
-    if (dateRange?.start && dateRange?.end) {
-      store.start = dateRange.start.toString();
-      store.end = dateRange.end.toString();
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-  }, [step, destination, dateRange, tags]);
 
   const isStepValid =
     step === 1
       ? destination.trim().length > 0
       : step === 2
-        ? !!(dateRange && dateRange.start && dateRange.end)
-        : tags.length > 0;
+      ? !!(dateRange && dateRange.start && dateRange.end)
+      : tags.length > 0;
 
   const handleNext = () => {
     if (isStepValid) setStep((s) => Math.min(s + 1, TOTAL_STEPS));
@@ -88,31 +41,37 @@ export default function PlannerPage() {
     );
 
   const handleSubmit = async () => {
-    if (!isStepValid || !dateRange || !dateRange.start || !dateRange.end)
-      return;
+    if (!isStepValid || !dateRange?.start || !dateRange.end) return;
     setLoading(true);
     setError(null);
+
     try {
-      const payload = JSON.stringify({
+      const payload = {
         destination,
         startDate: dateRange.start.toString(),
         endDate: dateRange.end.toString(),
         tags,
-      });
+      };
+
       const base = import.meta.env.VITE_API_BASE_URL || '';
       const resp = await fetch(`${base}/api/recommendations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: payload,
+        body: JSON.stringify(payload),
       });
 
-      if (!resp.ok) throw new Error(`Status ${resp.status}`);
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => null);
+        const msg = body?.error || `Status ${resp.status}`;
+
+        throw new Error(msg);
+      }
+
       const data = await resp.json();
 
-      // send the data to ResultsPage
       navigate('/planner/results', { state: data });
-    } catch {
-      setError('Failed to fetch recommendations. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch recommendations. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -121,7 +80,14 @@ export default function PlannerPage() {
   return (
     <DefaultLayout>
       <div className="mx-auto max-w-xl p-4">
-        {/* Progress + label */}
+        {/* Hero UI Alert Banner */}
+        {error && (
+          <div className="mb-4">
+            <Alert color="danger" title={error} />
+          </div>
+        )}
+
+        {/* Progress + step label */}
         <div className="mb-4 flex items-center justify-between">
           <Progress
             aria-label="Progress"
@@ -166,9 +132,7 @@ export default function PlannerPage() {
             color="primary"
             endContent={
               <Icon
-                icon={
-                  step < TOTAL_STEPS ? 'lucide:arrow-right' : 'lucide:check'
-                }
+                icon={step < TOTAL_STEPS ? 'lucide:arrow-right' : 'lucide:check'}
               />
             }
             isDisabled={!isStepValid}
@@ -179,7 +143,6 @@ export default function PlannerPage() {
             {step < TOTAL_STEPS ? 'Next' : 'Submit'}
           </Button>
         </div>
-        {error && <p className="mt-4 text-red-600">{error}</p>}
       </div>
     </DefaultLayout>
   );
