@@ -19,7 +19,9 @@ export default function PlannerPage() {
 
   const [step, setStep] = useState(1);
   const [destination, setDestination] = useState('');
-  const [dateRange, setDateRange] = useState<RangeValue<DateValue> | null>(null);
+  const [dateRange, setDateRange] = useState<RangeValue<DateValue> | null>(
+    null
+  );
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,8 +30,8 @@ export default function PlannerPage() {
     step === 1
       ? destination.trim().length > 0
       : step === 2
-      ? !!(dateRange && dateRange.start && dateRange.end)
-      : tags.length > 0;
+        ? !!(dateRange && dateRange.start && dateRange.end)
+        : tags.length > 0;
 
   const handleNext = () => {
     if (isStepValid) setStep((s) => Math.min(s + 1, TOTAL_STEPS));
@@ -40,62 +42,65 @@ export default function PlannerPage() {
       cur.includes(label) ? cur.filter((t) => t !== label) : [...cur, label]
     );
 
-    const handleSubmit = async () => {
-      if (!isStepValid || !dateRange?.start || !dateRange.end) return;
-      setLoading(true);
-      setError(null);
-    
-      try {
-        const payload = {
-          destination,
-          startDate: dateRange.start.toString(),
-          endDate: dateRange.end.toString(),
-          tags,
-        };
-    
-        const base = import.meta.env.VITE_API_BASE_URL || '';
-        const resp = await fetch(`${base}/api/recommendations`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-    
-        if (!resp.ok) {
-          // try to parse JSON body
-          let msg = `Status ${resp.status}`;
+  const handleSubmit = async () => {
+    if (!isStepValid || !dateRange?.start || !dateRange.end) return;
 
-          try {
-            const data = await resp.json();
+    setLoading(true);
+    setError(null);
 
-            // common patterns
-            if (typeof data.error === 'string') {
-              msg = data.error;
-            } else if (data.detail) {
-              msg = Array.isArray(data.detail)
-                ? data.detail.map((d: any) => d.msg || JSON.stringify(d)).join('; ')
-                : JSON.stringify(data.detail);
-            } else {
-              msg = JSON.stringify(data);
-            }
-          } catch {
-            // not JSON? try plain text
-            const txt = await resp.text();
+    try {
+      // Prepare payload
+      const payload = {
+        destination,
+        startDate: dateRange.start.toString(),
+        endDate: dateRange.end.toString(),
+        tags,
+      };
 
-            if (txt) msg = txt;
+      // Call your API
+      const base = import.meta.env.VITE_API_BASE_URL || '';
+      const resp = await fetch(`${base}/api/recommendations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      // If non-2xx, read body once and extract a meaningful message
+      if (!resp.ok) {
+        const bodyText = await resp.text();
+        let msg = `Status ${resp.status}`;
+
+        try {
+          const data = JSON.parse(bodyText);
+
+          if (typeof data.error === 'string') {
+            msg = data.error;
+          } else if (Array.isArray(data.detail)) {
+            msg = data.detail
+              .map((d: any) => d.msg || JSON.stringify(d))
+              .join('; ');
+          } else {
+            msg = JSON.stringify(data);
           }
-          throw new Error(msg);
+        } catch {
+          if (bodyText) msg = bodyText;
         }
-    
-        const data = await resp.json();
 
-        navigate('/planner/results', { state: data });
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch recommendations. Please try again.');
-      } finally {
-        setLoading(false);
+        throw new Error(msg);
       }
-    };
-    
+
+      // Otherwise parse JSON and navigate
+      const data = await resp.json();
+
+      navigate('/planner/results', { state: data });
+    } catch (err: any) {
+      setError(
+        err.message || 'Failed to fetch recommendations. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <DefaultLayout>
@@ -152,7 +157,9 @@ export default function PlannerPage() {
             color="primary"
             endContent={
               <Icon
-                icon={step < TOTAL_STEPS ? 'lucide:arrow-right' : 'lucide:check'}
+                icon={
+                  step < TOTAL_STEPS ? 'lucide:arrow-right' : 'lucide:check'
+                }
               />
             }
             isDisabled={!isStepValid}
