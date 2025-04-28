@@ -12,7 +12,6 @@ An intelligent full-stack web application that leverages AI to create personaliz
 ### 🌟 Quick Links
 
 - **Live Demo:** [TripPlanner Website](https://tripplannerwebsite.onrender.com)
-- **Repository:** [GitHub](https://github.com/shusingh/TripPlanner)
 
 ---
 
