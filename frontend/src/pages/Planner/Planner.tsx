@@ -105,10 +105,22 @@ export default function PlannerPage() {
   return (
     <DefaultLayout>
       <div className="mx-auto max-w-xl p-4">
-        {/* Hero UI Alert Banner */}
+        {/* Error Alert */}
         {error && (
           <div className="mb-4">
             <Alert color="danger" title={error} />
+          </div>
+        )}
+
+        {/* Service Notice Alert */}
+        {step === 3 && (
+          <div className="mb-4">
+            <Alert
+              color="warning"
+              variant="flat"
+              title="Service Notice"
+              description="We're using free tiers of our services, so responses may be delayed or temporarily unavailable. Thank you for your patience!"
+            />
           </div>
         )}
 
