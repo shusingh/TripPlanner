@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/shusingh/TripPlanner/backend/internal/hf"
+	"github.com/shusingh/TripPlanner/backend/internal/groq"
 	"github.com/shusingh/TripPlanner/backend/internal/models"
 )
 
 // GetRecommendations generates travel recommendations for a given destination and date range.
-// It uses the Hugging Face API to generate personalized suggestions for attractions,
+// It uses the Groq API to generate personalized suggestions for attractions,
 // food places, and other points of interest based on the provided tags.
 func GetRecommendations(req models.RecommendationRequest) (models.RecommendationResponse, error) {
 	// Construct the prompt for the AI model
@@ -34,10 +34,10 @@ func GetRecommendations(req models.RecommendationRequest) (models.Recommendation
 		strings.Join(req.Tags, ", "),
 	  )	  
 
-	// Query the Hugging Face API
-	generated, err := hf.QueryHF(prompt)
+	// Query the Groq API
+	generated, err := groq.QueryGroq(prompt)
 	if err != nil {
-		return models.RecommendationResponse{}, fmt.Errorf("HF query failed: %w", err)
+		return models.RecommendationResponse{}, fmt.Errorf("Groq query failed: %w", err)
 	}
 
 	// Parse the generated JSON into our response model

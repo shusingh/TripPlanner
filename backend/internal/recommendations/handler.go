@@ -1,13 +1,11 @@
 package recommendations
 
 import (
-  "encoding/json"
-  "errors"
-  "log"
-  "net/http"
+	"encoding/json"
+	"log"
+	"net/http"
 
-  "github.com/shusingh/TripPlanner/backend/internal/hf"
-  "github.com/shusingh/TripPlanner/backend/internal/models"
+	"github.com/shusingh/TripPlanner/backend/internal/models"
 )
 
 // Handler processes HTTP requests for travel recommendations.
@@ -29,15 +27,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
   resp, err := GetRecommendations(req)
   if err != nil {
     log.Printf("❌ Handler: GetRecommendations error: %v", err)
-    // If the root cause was HF quota exhaustion, return 503 & a clear message:
-    if errors.Is(err, hf.ErrQuotaExceeded) {
-      http.Error(w,
-        "Hugging Face quota exceeded; please try again later or upgrade your plan",
-        http.StatusServiceUnavailable,
-      )
-    } else {
-      http.Error(w, "internal server error", http.StatusInternalServerError)
-    }
+    // TODO: Check for specific Groq errors if needed in the future.
+    // For now, we'll remove the specific hf.ErrQuotaExceeded check.
+    http.Error(w, "internal server error", http.StatusInternalServerError)
     return
   }
   log.Printf("✅ Handler: sending response with %d attractions, %d food, %d other",

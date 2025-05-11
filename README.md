@@ -1,6 +1,6 @@
 # 🌍 AI Trip Planner
 
-An intelligent full-stack web application that leverages AI to create personalized travel itineraries. Simply input your destination, travel dates, and interests to receive AI-powered recommendations for attractions, restaurants, activities, and more through the Hugging Face Inference API.
+An intelligent full-stack web application that leverages AI to create personalized travel itineraries. Simply input your destination, travel dates, and interests to receive AI-powered recommendations for attractions, restaurants, activities, and more through the Groq API.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-1.18+-00ADD8?logo=go)](https://golang.org/doc/install)
@@ -20,14 +20,14 @@ An intelligent full-stack web application that leverages AI to create personaliz
 - **Smart Trip Planning**
 
   - Multi-step intuitive form with progress tracking
-  - AI-powered personalized recommendations
+  - AI-powered personalized recommendations (via Groq with gemma2-9b-it)
   - Interactive destination selection with map integration
 
 - **Modern Tech Architecture**
 
   - Type-safe frontend with React + TypeScript
   - High-performance Go backend
-  - AI integration via Hugging Face (Flan-T5)
+  - AI integration via Groq (gemma2-9b-it)
   - Responsive UI with Hero UI components
 
 - **Production-Ready**
@@ -55,7 +55,7 @@ An intelligent full-stack web application that leverages AI to create personaliz
 - **Language:** [Go 1.18+](https://golang.org/)
 - **Web Framework:** Standard `net/http`
 - **Environment:** [godotenv](https://github.com/joho/godotenv)
-- **AI Service:** [Hugging Face Inference API](https://huggingface.co/inference-api) (Flan-T5-Base)
+- **AI Service:** [Groq API](https://groq.com/) (gemma2-9b-it)
 
 #### Infrastructure
 
@@ -72,7 +72,7 @@ An intelligent full-stack web application that leverages AI to create personaliz
 
 - Node.js 16 or higher with npm
 - Go 1.18 or higher
-- Hugging Face API token with inference permissions
+- Groq API key with inference permissions
 - Git
 
 #### Local Development Setup
@@ -90,7 +90,7 @@ An intelligent full-stack web application that leverages AI to create personaliz
    cd backend
    cp .env.example .env
    # Configure your .env file:
-   # HF_TOKEN=your_hugging_face_token
+   # GROQ_API_KEY=your_groq_api_key
    # PORT=8080
 
    go mod download
@@ -126,7 +126,7 @@ An intelligent full-stack web application that leverages AI to create personaliz
    - Build Command: `go build -o app cmd/tripplanner/main.go`
    - Start Command: `./app`
    - Environment Variables:
-     - `HF_TOKEN`: Your Hugging Face API token
+     - `GROQ_API_KEY`: Your Groq API key
 
 2. **Frontend Static Site**
    - Repository: Same GitHub repository
@@ -147,7 +147,7 @@ TripPlanner/
 │  ├─ cmd/
 │  │  └─ tripplanner/     # Application entry point
 │  ├─ internal/           # Internal packages
-│  │  ├─ hf/             # Hugging Face client
+│  │  ├─ groq/           # Groq client
 │  │  ├─ recommendations/ # Recommendation logic
 │  │  └─ models/         # Data models
 │  ├─ go.mod             # Go dependencies
@@ -190,6 +190,6 @@ This project is licensed under the [MIT License](LICENSE) - see the LICENSE file
 
 ### 👏 Acknowledgments
 
-- [Hugging Face](https://huggingface.co/) for their amazing AI models
+- [Groq](https://groq.com/) for their fast AI inference
 - [Render.com](https://render.com/) for hosting services
 - All our [contributors](https://github.com/shusingh/TripPlanner/graphs/contributors)
